@@ -134,7 +134,7 @@ postMumbleVoteR mumbleId answer = do
       ownVotes <- runDB $ selectList [MumbleVoteMumblerId ==. mumblerId, MumbleVoteMumbleId ==. mumbleId] []
       -- Only allow votes for the right organization
       when (mumbleOrganizationId mumble /= orgId) $ redirect MumblingR
-      when (null ownVotes) $ do
+      when True $ do --(null ownVotes) $ do
         _ <- runDB $ insert $ MumbleVote mumbleId mumblerId answer
         return ()
       redirect $ MumbleR mumbleId

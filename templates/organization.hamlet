@@ -12,4 +12,7 @@ $else
         $if total == 0
           No votes yet
         $else
+          <div .progress>
+            <div .progress-bar .progress-bar-success style="width: #{agrees}%">
+            <div .progress-bar .progress-bar-danger style="width: #{disagrees}%">
           #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)

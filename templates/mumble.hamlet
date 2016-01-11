@@ -1,0 +1,22 @@
+<h1>#{domain}
+<h2>#{mumbleStatement mumble}
+$with (Entity mumbleId _, agrees, disagrees, dontcares, total) <- stats
+  <p>
+    $if total == 0
+      No votes yet
+    $else
+      #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)
+  <p>
+    $if null ownVotes
+      <form method=post action=@{MumbleVoteR mumbleId 1}>
+        $maybe token <- mToken
+          <input type=hidden name="_token" value=#{token}>
+        <button .btn .btn-success type=submit name=agree>Agree
+      <form method=post action=@{MumbleVoteR mumbleId 0}>
+        $maybe token <- mToken
+          <input type=hidden name="_token" value=#{token}>
+        <button .btn .btn-warning type=submit name=dontcare>Don't care
+      <form method=post action=@{MumbleVoteR mumbleId -1}>
+        $maybe token <- mToken
+          <input type=hidden name="_token" value=#{token}>
+        <button .btn .btn-danger type=submit name=disagree>Disagree

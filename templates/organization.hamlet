@@ -1,0 +1,15 @@
+<h1>#{organizationDomain org}
+
+$if null mumbles
+  <p>Nothing shared for #{organizationDomain org}
+$else
+  <ul>
+    $forall (Entity mumbleId mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
+      <li>
+        <a href=@{MumbleR mumbleId}>
+          #{mumbleStatement mumble}
+        - #
+        $if total == 0
+          No votes yet
+        $else
+          #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)

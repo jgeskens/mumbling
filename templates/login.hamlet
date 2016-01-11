@@ -1,0 +1,7 @@
+<h1>Log in
+
+<p>
+  Before you can mumble about your organization, we need to be sure that #
+  you actually are a member of that organization.
+
+<button .btn .btn-primary onclick=#{loginFunction}()>Login using BrowserID

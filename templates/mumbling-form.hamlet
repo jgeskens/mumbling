@@ -1,0 +1,4 @@
+<form method=post action=@{MumblingR}#form enctype=#{formEnctype}>
+  ^{formWidget}
+  <button .btn .btn-primary type="submit">
+     Share feeling

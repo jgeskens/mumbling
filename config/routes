@@ -1,0 +1,14 @@
+/static StaticR Static appStatic
+/auth   AuthR   Auth   getAuth
+
+/favicon.ico FaviconR GET
+/robots.txt RobotsR GET
+
+/ MumblingR GET POST
+/organization OrganizationR GET
+/mumble/#MumbleId MumbleR GET
+/mumble/#MumbleId/vote/#Int MumbleVoteR POST
+
+/yesod HomeR GET POST
+
+/comments CommentR POST

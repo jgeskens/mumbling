@@ -1,5 +1,7 @@
 <div .jumbotron>
   <h1>mumbling.net
-  <p>Anonymously share your feelings at your work place or organization and see how many people have those feelings as well!
+  <p>Anonymously share your feelings about your work place or organization and see how many people have those feelings as well!
   <p>
     <button .btn .btn-primary .btn-lg onclick=#{loginFunction}()>Get started
+<div .footer>
+  Made with love by Jef Geskens using Haskell and Yesod

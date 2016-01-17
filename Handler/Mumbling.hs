@@ -6,16 +6,22 @@ import Yesod.Form.Bootstrap3 ( BootstrapFormLayout (..)
                              , bfs
                              )
 import Yesod.Auth.BrowserId (createOnClick)
+import qualified Data.Text as T
 
 mumbleForm :: Text -> Form (Maybe Text)
 mumbleForm domain = renderBootstrap3 BootstrapBasicForm $ Just
-  <$> areq textField (bfs ("How are you feeling now at " ++ domain ++ "?" :: Text)) Nothing
+  <$> areq textField (bfs ("How are you feeling about " ++ domain ++ "?" :: Text)) Nothing
 
 extractDomain :: Entity User -> Text
 extractDomain userEntity =
   let (Entity _ user) = userEntity
       email = userIdent user
   in drop 1 $ dropWhile (/= '@') email
+
+slugify :: Text -> Text
+slugify toSlugify = T.pack [if f c then c else '-' | c <- prepped]
+  where f = (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']))
+        prepped = T.unpack $ T.toLower toSlugify
 
 getMumblingR :: Handler Html
 getMumblingR = do
@@ -49,8 +55,8 @@ postMumblingR = do
           mumbler <- case maybeMumbler of
             Just (Entity mumblerId _) -> return mumblerId
             Nothing -> runDB $ insert $ Mumbler org (Just maid) $ userIdent u
-          mumble <- runDB $ insert $ Mumble org stmt Nothing
-          _ <- runDB $ insert $ MumbleVote mumble mumbler 1
+          mumble <- runDB $ insert $ Mumble org stmt (slugify stmt) Nothing
+          -- _ <- runDB $ insert $ MumbleVote mumble mumbler 1
           redirect OrganizationR
         _ -> defaultLayout $ do
           setTitle "Mumbling"
@@ -82,20 +88,24 @@ getOrganizationR = do
     Just (Entity _ user) -> do
       let email = userIdent user
           domain = drop 1 $ dropWhile (/= '@') email
-      maybeOrg <- runDB $ getBy $ UniqueOrganizationDomain domain
-      (Entity orgId org) <- case maybeOrg of
-        Just o -> return o
-        Nothing -> do
-          oId <- runDB $ insert $ Organization domain
-          return $ Entity oId $ Organization domain
-      mumbles <- runDB $ selectList [MumbleOrganizationId ==. orgId] [Asc MumbleId]
+      redirect $ OrganizationPrettyR domain
 
-      -- Loop over the mumbles and add the count
-      mumblesWithCount <- mapM mumbleStats mumbles
+getOrganizationPrettyR :: Text -> Handler Html
+getOrganizationPrettyR domain = do
+  maybeOrg <- runDB $ getBy $ UniqueOrganizationDomain domain
+  (Entity orgId org) <- case maybeOrg of
+    Just o -> return o
+    Nothing -> do
+      oId <- runDB $ insert $ Organization domain
+      return $ Entity oId $ Organization domain
+  mumbles <- runDB $ selectList [MumbleOrganizationId ==. orgId] [Asc MumbleId]
 
-      defaultLayout $ do
-        setTitle $ toHtml $ "Organization " ++ domain
-        $(widgetFile "organization")
+  -- Loop over the mumbles and add the count
+  mumblesWithCount <- mapM mumbleStats mumbles
+
+  defaultLayout $ do
+    setTitle $ toHtml $ "Organization " ++ domain
+    $(widgetFile "organization")
 
 getMumbleR :: MumbleId -> Handler Html
 getMumbleR mumbleId = do
@@ -120,6 +130,12 @@ getMumbleR mumbleId = do
         setTitle $ toHtml $ mumbleStatement mumble ++ " at " ++ domain
         $(widgetFile "mumble")
 
+getMumblePrettyR :: Text -> Text -> Handler Html
+getMumblePrettyR domain mumbleSlug = do
+  Entity orgId _ <- runDB $ getBy404 $ UniqueOrganizationDomain domain
+  Entity mumbleId _ <- runDB $ getBy404 $ UniqueMumble mumbleSlug orgId
+  getMumbleR mumbleId
+
 postMumbleVoteR :: MumbleId -> Int -> Handler Html
 postMumbleVoteR mumbleId answer = do
   ma <- maybeAuth
@@ -134,10 +150,10 @@ postMumbleVoteR mumbleId answer = do
       ownVotes <- runDB $ selectList [MumbleVoteMumblerId ==. mumblerId, MumbleVoteMumbleId ==. mumbleId] []
       -- Only allow votes for the right organization
       when (mumbleOrganizationId mumble /= orgId) $ redirect MumblingR
-      when True $ do --(null ownVotes) $ do
+      when (null ownVotes) $ do
         _ <- runDB $ insert $ MumbleVote mumbleId mumblerId answer
         return ()
-      redirect $ MumbleR mumbleId
+      redirect $ MumblePrettyR domain $ mumbleSlug mumble
 
 composeEmail :: Text
 composeEmail = error "not implemented"

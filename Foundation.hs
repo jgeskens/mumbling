@@ -82,7 +82,7 @@ instance Yesod App where
               Just currentRoute -> if currentRoute == route then snippet else "" :: Text
               _ -> "" :: Text
         pc <- widgetToPageContent $ do
-            loginFunction <- createOnClick def $ AuthR
+            loginFunction <- createOnClick def AuthR
             let navbar = $(widgetFile "navbar")
             addScriptRemote "//code.jquery.com/jquery-1.11.3.min.js"
             addScript $ StaticR js_bootstrap_js
@@ -99,6 +99,7 @@ instance Yesod App where
     isAuthorized RobotsR _ = return Authorized
 
     isAuthorized OrganizationR _ = isAuthenticated
+    isAuthorized (OrganizationPrettyR _) _ = isAuthenticated
 
     -- Default to Authorized for now.
     isAuthorized _ _ = return Authorized
@@ -155,7 +156,7 @@ instance YesodAuth App where
     -- Where to send a user after logout
     logoutDest _ = MumblingR
     -- Override the above two destinations when a Referer: header is present
-    redirectToReferer _ = False
+    redirectToReferer _ = True
 
     authenticate creds = runDB $
         if '+' `elem` credsIdent creds then return $ UserError InvalidLogin else do

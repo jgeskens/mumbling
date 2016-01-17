@@ -8,6 +8,8 @@
 /organization OrganizationR GET
 /mumble/#MumbleId MumbleR GET
 /mumble/#MumbleId/vote/#Int MumbleVoteR POST
+!/#Text/#Text MumblePrettyR GET
+!/#Text OrganizationPrettyR GET
 
 /yesod HomeR GET POST
 

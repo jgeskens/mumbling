@@ -31,7 +31,9 @@ Mumbler json
 Mumble json
     organizationId OrganizationId
     statement Text
+    slug Text
     groupEmail Text Maybe
+    UniqueMumble slug organizationId
     deriving Eq
     deriving Show
 

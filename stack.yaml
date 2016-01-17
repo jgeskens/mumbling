@@ -1,7 +1,7 @@
 # For more information, see: https://github.com/commercialhaskell/stack/blob/release/doc/yaml_configuration.md
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-4.0
+resolver: lts-4.1
 
 # Local packages, usually specified by relative directory name
 packages:
@@ -17,7 +17,7 @@ flags:
     dev: false
 
 # Extra package databases containing global packages
-extra-package-dbs: []
+# extra-package-dbs: []
 
 # Control whether we use the GHC we find on the path
 # system-ghc: true
@@ -33,3 +33,13 @@ extra-package-dbs: []
 # Extra directories used by stack for building
 # extra-include-dirs: [/path/to/dir]
 # extra-lib-dirs: [/path/to/dir]
+docker:
+  enable: false
+
+image:
+  container:
+    name: tutum.co/jgeskens/mumbling
+    base: fpco/stack-run
+    add:
+      config: /app/config
+      static: /app/static

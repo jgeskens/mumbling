@@ -3,16 +3,23 @@
 $if null mumbles
   <p>Nothing shared for #{organizationDomain org}
 $else
-  <ul>
-    $forall (Entity mumbleId mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
-      <li>
-        <a href=@{MumbleR mumbleId}>
-          #{mumbleStatement mumble}
-        - #
-        $if total == 0
-          No votes yet
-        $else
-          <div .progress>
-            <div .progress-bar .progress-bar-success style="width: #{agrees}%">
-            <div .progress-bar .progress-bar-danger style="width: #{disagrees}%">
-          #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)
+  <table .table>
+    <thead>
+      <tr>
+        <th>Mumble
+        <th colspan=2>Votes
+    <tbody>
+      $forall (Entity mumbleId mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
+        <tr>
+          <td>
+            <a href=@{MumblePrettyR (organizationDomain org) (mumbleSlug mumble)}>#{mumbleStatement mumble}
+          $if total == 0
+            <td colspan=2>
+              No votes yet
+          $else
+            <td>
+              #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)
+            <td style="width: 25%;">
+              <div .progress>
+                <div .progress-bar .progress-bar-success style="width: #{agrees}%">
+                <div .progress-bar .progress-bar-danger style="width: #{disagrees}%">

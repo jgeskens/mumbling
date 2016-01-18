@@ -9,7 +9,7 @@ $else
         <th>Mumble
         <th colspan=2>Votes
     <tbody>
-      $forall (Entity mumbleId mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
+      $forall (Entity _ mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
         <tr>
           <td>
             <a href=@{MumblePrettyR (organizationDomain org) (mumbleSlug mumble)}>#{mumbleStatement mumble}

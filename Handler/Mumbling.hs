@@ -12,16 +12,45 @@ mumbleForm :: Text -> Form (Maybe Text)
 mumbleForm domain = renderBootstrap3 BootstrapBasicForm $ Just
   <$> areq textField (bfs ("How are you feeling about " ++ domain ++ "?" :: Text)) Nothing
 
+emailToDomain :: Text -> Text
+emailToDomain email
+  | '@' `elem` email = drop 1 $ dropWhile (/= '@') email
+  | otherwise = ""
+
 extractDomain :: Entity User -> Text
 extractDomain userEntity =
   let (Entity _ user) = userEntity
       email = userIdent user
-  in drop 1 $ dropWhile (/= '@') email
+  in emailToDomain email
 
 slugify :: Text -> Text
 slugify toSlugify = T.pack [if f c then c else '-' | c <- prepped]
   where f = (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9']))
         prepped = T.unpack $ T.toLower toSlugify
+
+getOrCreateOrganization :: Entity User -> Handler (Entity Organization)
+getOrCreateOrganization userEntity = do
+  let domain = extractDomain userEntity
+  maybeOrg <- runDB $ getBy $ UniqueOrganizationDomain domain
+  case maybeOrg of
+    Just org -> return org
+    Nothing -> do
+      let orgObj = Organization domain
+      orgId <- runDB $ insert orgObj
+      return $ Entity orgId orgObj
+
+getOrCreateMumbler :: Entity User -> Handler (Entity Mumbler)
+getOrCreateMumbler userEntity = do
+  let (Entity userId user) = userEntity
+      email = userIdent user
+  maybeMumbler <- runDB $ getBy $ UniqueMumblerEmail email
+  (Entity orgId _) <- getOrCreateOrganization userEntity
+  case maybeMumbler of
+    Just mumbler -> return mumbler
+    Nothing -> do
+      let mumblerObj = Mumbler orgId (Just userId) email
+      mumblerId <- runDB $ insert mumblerObj
+      return $ Entity mumblerId mumblerObj
 
 getMumblingR :: Handler Html
 getMumblingR = do
@@ -56,7 +85,7 @@ postMumblingR = do
             Just (Entity mumblerId _) -> return mumblerId
             Nothing -> runDB $ insert $ Mumbler org (Just maid) $ userIdent u
           mumble <- runDB $ insert $ Mumble org stmt (slugify stmt) Nothing
-          -- _ <- runDB $ insert $ MumbleVote mumble mumbler 1
+          _ <- runDB $ insert $ MumbleVote mumble mumbler 1
           redirect OrganizationR
         _ -> defaultLayout $ do
           setTitle "Mumbling"
@@ -98,6 +127,7 @@ getOrganizationPrettyR domain = do
     Nothing -> do
       oId <- runDB $ insert $ Organization domain
       return $ Entity oId $ Organization domain
+
   mumbles <- runDB $ selectList [MumbleOrganizationId ==. orgId] [Asc MumbleId]
 
   -- Loop over the mumbles and add the count
@@ -113,16 +143,14 @@ getMumbleR mumbleId = do
   mToken <- fmap reqToken getRequest
   case ma of
     Nothing -> redirect $ AuthR LoginR
-    Just u@(Entity _ user) -> do
+    Just u -> do
       let domain = extractDomain u
-          email = userIdent user
-      Entity orgId _ <- runDB $ getBy404 $ UniqueOrganizationDomain domain
       mumble <- runDB $ get404 mumbleId
-      Entity mumblerId _ <- runDB $ getBy404 $ UniqueMumblerEmail email
+      Entity mumblerId mumbler <- getOrCreateMumbler u
       ownVotes <- runDB $ selectList [MumbleVoteMumblerId ==. mumblerId, MumbleVoteMumbleId ==. mumbleId] []
 
       -- Only show mumblings of the right organization
-      when (mumbleOrganizationId mumble /= orgId) $ redirect MumblingR
+      when (mumbleOrganizationId mumble /= mumblerOrganizationId mumbler) $ redirect MumblingR
 
       stats <- mumbleStats $ Entity mumbleId mumble
 
@@ -141,19 +169,17 @@ postMumbleVoteR mumbleId answer = do
   ma <- maybeAuth
   case ma of
     Nothing -> redirect $ AuthR LoginR
-    Just u@(Entity _ user) -> do
-      let domain = extractDomain u
-          email = userIdent user
-      Entity orgId _ <- runDB $ getBy404 $ UniqueOrganizationDomain domain
+    Just u -> do
+      Entity orgId org <- getOrCreateOrganization u
       mumble <- runDB $ get404 mumbleId
-      Entity mumblerId _ <- runDB $ getBy404 $ UniqueMumblerEmail email
+      Entity mumblerId _ <- getOrCreateMumbler u
       ownVotes <- runDB $ selectList [MumbleVoteMumblerId ==. mumblerId, MumbleVoteMumbleId ==. mumbleId] []
       -- Only allow votes for the right organization
       when (mumbleOrganizationId mumble /= orgId) $ redirect MumblingR
       when (null ownVotes) $ do
         _ <- runDB $ insert $ MumbleVote mumbleId mumblerId answer
         return ()
-      redirect $ MumblePrettyR domain $ mumbleSlug mumble
+      redirect $ MumblePrettyR (organizationDomain org) $ mumbleSlug mumble
 
 composeEmail :: Text
 composeEmail = error "not implemented"

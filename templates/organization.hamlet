@@ -9,13 +9,13 @@ $else
         <th>Mumble
         <th colspan=2>Votes
     <tbody>
-      $forall (Entity _ mumble, agrees, disagrees, dontcares, total) <- mumblesWithCount
+      $forall (Entity _ mumble, agrees, disagrees, dontcares, total, ownVotes) <- mumblesWithCount
         <tr>
           <td>
             <a href=@{MumblePrettyR (organizationDomain org) (mumbleSlug mumble)}>#{mumbleStatement mumble}
-          $if total == 0
+          $if ownVotes == 0
             <td colspan=2>
-              No votes yet
+              You didn't vote yet on this one.
           $else
             <td>
               #{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)

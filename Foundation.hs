@@ -4,7 +4,7 @@ import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
-import Yesod.Auth.BrowserId (authBrowserId, createOnClick, forwardUrl)
+import Yesod.Auth.BrowserId (authBrowserId, createOnClick)
 import Yesod.Auth.Message   (AuthMessage (InvalidLogin))
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
@@ -78,8 +78,8 @@ instance Yesod App where
         ma <- maybeAuth
         mCsrfToken <- fmap reqToken getRequest
         mCurrentRoute <- getCurrentRoute
-        let isCurrent route snippet = case mCurrentRoute of
-              Just currentRoute -> if currentRoute == route then snippet else "" :: Text
+        let isCurrent routes snippet = case mCurrentRoute of
+              Just currentRoute -> if currentRoute `elem` routes then snippet else "" :: Text
               _ -> "" :: Text
         pc <- widgetToPageContent $ do
             loginFunction <- createOnClick def AuthR
@@ -98,8 +98,11 @@ instance Yesod App where
     isAuthorized FaviconR _ = return Authorized
     isAuthorized RobotsR _ = return Authorized
 
+    -- Routes requiring authentication
     isAuthorized OrganizationR _ = isAuthenticated
     isAuthorized (OrganizationPrettyR _) _ = isAuthenticated
+    isAuthorized (MumbleR _) _ = isAuthenticated
+    isAuthorized (MumblePrettyR _ _) _ = isAuthenticated
 
     -- Default to Authorized for now.
     isAuthorized _ _ = return Authorized

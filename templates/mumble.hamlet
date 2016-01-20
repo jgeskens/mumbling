@@ -1,15 +1,21 @@
-<h1>#{domain}
-<h2>#{mumbleStatement mumble}
-$with (Entity mumbleId _, agrees, disagrees, dontcares, total) <- stats
-  $if total == 0
-    <p>No votes yet
-  $else
-    <p>#{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)
-    <div .progress>
-      <div .progress-bar .progress-bar-success style="width: #{agrees}%">
-      <div .progress-bar .progress-bar-danger style="width: #{disagrees}%">
+<h1>
+  <span .glyphicon .glyphicon-home aria-hidden=true>
+  #{domain}
 
-  $if null ownVotes
+$if totalVotesByUser == 0
+  <h2>
+    <span .glyphicon .glyphicon-heart aria-hidden=true>
+    Welcome!
+  <p>
+    It seems like it's the first time you are using #
+    \<b>mumbling.net</b>! #
+    After sharing your opinion about this mumble, you will see the results.
+
+<h2>
+  <span .glyphicon .glyphicon-bullhorn aria-hidden=true>
+  #{mumbleStatement mumble}
+$with (Entity mumbleId _, agrees, disagrees, dontcares, total, ownVotes) <- stats
+  $if ownVotes == 0
     <form method=post action=@{MumbleVoteR mumbleId 1} style="display: inline;">
       $maybe token <- mToken
         <input type=hidden name="_token" value=#{token}>
@@ -22,3 +28,8 @@ $with (Entity mumbleId _, agrees, disagrees, dontcares, total) <- stats
       $maybe token <- mToken
         <input type=hidden name="_token" value=#{token}>
       <button .btn .btn-danger type=submit name=disagree>Disagree
+  $else
+    <p>#{agrees}% agree, #{disagrees}% disagree, #{dontcares}% don't care (#{total} votes)
+    <div .progress>
+      <div .progress-bar .progress-bar-success style="width: #{agrees}%">
+      <div .progress-bar .progress-bar-danger style="width: #{disagrees}%">

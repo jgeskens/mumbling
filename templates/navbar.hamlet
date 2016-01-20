@@ -7,9 +7,9 @@
       <a .navbar-brand href=@{MumblingR}>mumbling.net
     <div .collapse .navbar-collapse id=bs-example-navbar-collapse-1>
       <ul .nav .navbar-nav>
-        <li .#{isCurrent MumblingR "active"}>
+        <li .#{isCurrent [MumblingR] "active"}>
           <a href=@{MumblingR}>Share feeling
-        <li .#{isCurrent OrganizationR "active"}>
+        <li .#{isCurrent [OrganizationR, OrganizationPrettyR ""] "active"}>
           <a href=@{OrganizationR}>Mumbles
         \<!--<li class="dropdown">
           <a .dropdown-toggle href=# data-toggle=dropdown role=button aria-haspopup=true aria-expanded=false>Dropdown

@@ -4,7 +4,7 @@ import Import.NoFoundation
 import Database.Persist.Sql (ConnectionPool, runSqlPool)
 import Text.Hamlet          (hamletFile)
 import Text.Jasmine         (minifym)
-import Yesod.Auth.BrowserId (authBrowserId, createOnClick)
+import Yesod.Auth.BrowserId (authBrowserId, createOnClick, bisLazyLoad, BrowserIdSettings)
 import Yesod.Auth.Message   (AuthMessage (InvalidLogin))
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
@@ -40,6 +40,10 @@ mkYesodData "App" $(parseRoutesFile "config/routes")
 
 -- | A convenient synonym for creating forms.
 type Form x = Html -> MForm (HandlerT App IO) (FormResult x, Widget)
+
+-- Override BrowserId settings
+browserIdOverride :: BrowserIdSettings
+browserIdOverride = def {bisLazyLoad = False}
 
 -- Please see the documentation for the Yesod typeclass. There are a number
 -- of settings which can be configured by overriding methods here.
@@ -82,7 +86,7 @@ instance Yesod App where
               Just currentRoute -> if currentRoute `elem` routes then snippet else "" :: Text
               _ -> "" :: Text
         pc <- widgetToPageContent $ do
-            loginFunction <- createOnClick def AuthR
+            loginFunction <- createOnClick browserIdOverride AuthR
             let navbar = $(widgetFile "navbar")
             addScriptRemote "//code.jquery.com/jquery-1.11.3.min.js"
             addScript $ StaticR js_bootstrap_js
@@ -172,14 +176,14 @@ instance YesodAuth App where
                   }
 
     -- You can add other plugins like BrowserID, email or OAuth here
-    authPlugins _ = [authBrowserId def]
+    authPlugins _ = [authBrowserId browserIdOverride]
 
     authHttpManager = getHttpManager
 
     loginHandler = do
       tp <- getRouteToParent
       lift $ authLayout $ do
-        loginFunction <- createOnClick def tp
+        loginFunction <- createOnClick browserIdOverride tp
         setTitle "Log in to mumbling.net"
         $(widgetFile "login")
 

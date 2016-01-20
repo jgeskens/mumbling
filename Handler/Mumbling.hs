@@ -139,7 +139,6 @@ getMumbleR mumbleId = do
   let domain = extractDomain u
   mumble <- runDB $ get404 mumbleId
   Entity mumblerId mumbler <- getOrCreateMumbler u
-  ownVotes <- runDB $ count [MumbleVoteMumblerId ==. mumblerId, MumbleVoteMumbleId ==. mumbleId]
   totalVotesByUser <- runDB $ count [MumbleVoteMumblerId ==. mumblerId]
 
   -- Only show mumblings of the right organization
